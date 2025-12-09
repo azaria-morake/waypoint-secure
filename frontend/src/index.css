@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* Tactical Grid Pattern for Operator Map */
+  .bg-grid-pattern {
+    background-image: radial-gradient(rgba(148, 163, 184, 0.2) 1px, transparent 1px);
+    background-size: 20px 20px;
+  }
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', system-ui, sans-serif;
+  overflow: hidden; /* Prevent scroll on app container */
+}
