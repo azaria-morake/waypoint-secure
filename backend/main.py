@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from services.firebase import initialize_firebase, update_journey_status
+from services.firebase import initialize_firebase, update_journey_status, get_db
 from services.analysis import generate_heatmap, calculate_risk
 
 # --- APP SETUP ---
@@ -63,6 +63,33 @@ def analyze_journey(journey_id: str):
         "data": analysis
     }
 
+
+# 1. NEW: Start Journey (Green Dot)
+@app.post("/api/v1/journey/{journey_id}/start")
+def start_journey(journey_id: str, payload: dict): # payload expects { "user_id": "..." }
+    """
+    Register a new journey as 'active' (Green) immediately.
+    """
+    print(f"▶️ [JOURNEY START] ID: {journey_id}")
+    success = update_journey_status(journey_id, "active")
+    if success:
+        return {"status": "success", "message": "Journey started."}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to start journey")
+
+# 2. NEW: Cancel Alert (False Alarm)
+@app.post("/api/v1/alert/{journey_id}/cancel")
+def cancel_alert(journey_id: str):
+    """
+    Reverts status from 'panic' -> 'active'.
+    """
+    print(f"undo [FALSE ALARM] ID: {journey_id}")
+    success = update_journey_status(journey_id, "active")
+    if success:
+        return {"status": "success", "message": "Alert cancelled."}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to cancel alert")
+
 @app.post("/api/v1/alert/dispatch")
 def dispatch_help(payload: DispatchRequest):
     """
@@ -81,6 +108,61 @@ def dispatch_help(payload: DispatchRequest):
         return {"status": "success", "message": "Units dispatched."}
     else:
         raise HTTPException(status_code=500, detail="Failed to update incident status")
+
+@app.post("/api/v1/journey/{journey_id}/end")
+def end_journey(journey_id: str):
+    """
+    User arrived safely. 
+    Update DB status to 'finished' so it drops off the Operator map.
+    """
+    print(f"✅ [JOURNEY ENDED] ID: {journey_id}")
+    
+    # Update DB
+    success = update_journey_status(journey_id, "finished")
+    
+    if success:
+        return {"status": "success", "message": "Journey closed."}
+    else:
+        raise HTTPException(status_code=500, detail="Failed to close journey")
+
+
+# D. Sync (The Glue)
+@app.get("/api/v1/journeys")
+def get_active_journeys():
+    """
+    Returns all active journeys from the database.
+    Used by the Operator Dashboard to see 'Real' users.
+    """
+    database = get_db()
+    
+    # 1. Mock Mode (Memory)
+    if database == "MOCK_MODE":
+        # In a real app, we'd have a global list variable. 
+        # For this hackathon, we can just return a hardcoded 'Real' user if you like,
+        # OR better: The Python script needs a simple in-memory store if no Firestore.
+        return {"journeys": []} # Fallback
+        
+    # 2. Firestore Mode (Real)
+    try:
+        journeys_ref = database.collection('journeys')
+        # Get only active or panic journeys
+        docs = journeys_ref.where('status', 'in', ['active', 'critical', 'panic_dispatched']).stream()
+        
+        results = []
+        for doc in docs:
+            d = doc.to_dict()
+            results.append({
+                "id": doc.id,
+                "name": d.get("user_id", "Unknown"), # Using user_id as name for now
+                "status": d.get("status"),
+                "x": 50, "y": 50, # Default center if no GPS stream yet
+                # In a full app, you'd save {lat, lng} to Firestore and map it here
+            })
+        return {"journeys": results}
+        
+    except Exception as e:
+        print(f"❌ [DB READ ERROR] {e}")
+        return {"journeys": []}
 
 if __name__ == "__main__":
     import uvicorn
