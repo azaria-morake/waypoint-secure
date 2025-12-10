@@ -68,5 +68,58 @@ export const api = {
       console.error("Dispatch Failed", e);
       return { status: 'offline' };
     }
+  },
+
+  // 4. End Journey (Arrived Safely)
+  endJourney: async (journeyId) => {
+    try {
+      await fetch(`${API_URL}/journey/${journeyId}/end`, {
+        method: 'POST'
+      });
+      return true;
+    } catch (e) {
+      console.error("Failed to end journey", e);
+      return false;
+    }
+  },
+
+  // 5. Get Active Journeys (Sync)
+  getActiveJourneys: async () => {
+    try {
+      const res = await fetch(`${API_URL}/journeys`);
+      const data = await res.json();
+      return data.journeys || [];
+    } catch (e) {
+      return [];
+    }
+  }
+,
+
+  // 6. Start Journey (Register on Ops Map)
+  startJourney: async (journeyId, userId) => {
+    try {
+      await fetch(`${API_URL}/journey/${journeyId}/start`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_id: userId })
+      });
+      return true;
+    } catch (e) {
+      console.error("Failed to start", e);
+      return false;
+    }
+  },
+
+  // 7. Cancel Alert (False Alarm)
+  cancelAlert: async (journeyId) => {
+    try {
+      await fetch(`${API_URL}/alert/${journeyId}/cancel`, {
+        method: 'POST'
+      });
+      return true;
+    } catch (e) {
+      console.error("Failed to cancel", e);
+      return false;
+    }
   }
 };

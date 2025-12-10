@@ -1,13 +1,15 @@
+// src/features/citizen/CitizenHome.jsx
 import React from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { MapPin, AlertTriangle, LogOut, CheckCircle } from 'lucide-react';
+import { MapPin, AlertTriangle, XCircle, CheckCircle } from 'lucide-react';
 
 const CitizenHome = () => {
-  const { logout, startJourney, endJourney, triggerPanic, myJourneyId, journeys } = useAuth();
+  const { 
+    logout, startJourney, endJourney, triggerPanic, cancelPanic, 
+    myStatus, myJourneyId 
+  } = useAuth(); // Note: we use myStatus directly now
 
-  // Find my specific journey object to get status
-  const myJourney = journeys.find(j => j.id === myJourneyId);
-  const isPanic = myJourney?.status === 'critical';
+  const isPanic = myStatus === 'critical';
 
   if (!myJourneyId) {
     return (
@@ -33,10 +35,10 @@ const CitizenHome = () => {
   }
 
   return (
-    <div className={`flex-1 flex flex-col items-center space-y-6 ${isPanic ? 'bg-red-50 -m-4 p-8' : ''}`}>
+    <div className={`flex-1 flex flex-col items-center space-y-6 transition-colors duration-500 ${isPanic ? 'bg-red-50 -m-4 p-8' : ''}`}>
       
       {/* Status Badge */}
-      <div className={`px-4 py-2 rounded-full flex items-center space-x-2 ${isPanic ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
+      <div className={`px-4 py-2 rounded-full flex items-center space-x-2 transition-colors ${isPanic ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`}>
         <div className={`w-3 h-3 rounded-full ${isPanic ? 'bg-red-600 animate-ping' : 'bg-green-500 animate-pulse'}`} />
         <span className="font-bold text-sm">
           {isPanic ? 'CRITICAL ALERT SENT' : 'LIVE WATCH ACTIVE'}
@@ -44,23 +46,41 @@ const CitizenHome = () => {
       </div>
 
       <div className="text-center">
-        <p className="text-gray-500 text-sm">Your location is being tracked by Ops.</p>
+        <p className="text-gray-500 text-sm">
+           {isPanic ? 'Emergency Services have been notified.' : 'Your location is being tracked by Ops.'}
+        </p>
         <p className="text-xs text-gray-400 font-mono mt-1">ID: #{myJourneyId}</p>
       </div>
 
-      {/* THE BIG RED BUTTON */}
-      <div className="flex-1 flex items-center justify-center w-full">
+      {/* THE BUTTONS */}
+      <div className="flex-1 flex flex-col items-center justify-center w-full space-y-6">
+        
+        {/* Panic Button */}
         <button
           onClick={triggerPanic}
+          disabled={isPanic} // PREVENT SPAM: Disable if already panic
           className={`w-64 h-64 rounded-full flex flex-col items-center justify-center border-8 shadow-2xl transition-all duration-300
             ${isPanic 
-              ? 'bg-red-600 border-red-800 scale-105 animate-pulse text-white' 
-              : 'bg-white border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200'
+              ? 'bg-red-600 border-red-800 scale-95 opacity-90 cursor-not-allowed' // Disabled State
+              : 'bg-white border-red-100 text-red-600 hover:bg-red-50 hover:border-red-200 active:scale-95'
             }`}
         >
           <AlertTriangle className={`w-20 h-20 mb-2 ${isPanic ? 'text-white' : 'text-red-600'}`} />
-          <span className="font-black text-2xl tracking-widest">PANIC</span>
+          <span className={`font-black text-2xl tracking-widest ${isPanic ? 'text-white' : ''}`}>
+            {isPanic ? 'HELP ON WAY' : 'PANIC'}
+          </span>
         </button>
+
+        {/* Cancel / False Alarm Button (Only visible during panic) */}
+        {isPanic && (
+            <button 
+                onClick={cancelPanic}
+                className="flex items-center space-x-2 text-gray-500 hover:text-gray-800 bg-white px-4 py-2 rounded-full shadow border border-gray-200"
+            >
+                <XCircle className="w-5 h-5" />
+                <span className="text-sm font-semibold">Cancel (False Alarm)</span>
+            </button>
+        )}
       </div>
 
       <button 
