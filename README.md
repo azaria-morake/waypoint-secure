@@ -29,34 +29,50 @@ Citizens and a tactical dashboard for Operators.
 
 ### 🖥️ Operator View (Desktop)
 
--   **Tactical Dashboard:** Dark-mode, data-dense "Command Center" UI.
--   **Real-time Map:** Integration with **Google Maps** to visualize
-    active units.
--   **Live Sync:** Polling architecture to fetch status updates (Active,
-    Critical, Safe).
--   **Mock Simulation:** Background simulation of other "Ghost Units" to
-    demonstrate scale.
+-   **Tactical Dashboard:** Dark-mode, data-dense "Command Center" UI
+    with collapsible incident cards.
+-   **Hybrid Map Engine:**
+    -   **Tactical Mode:** Lightweight, low-latency SVG grid for
+        high-level awareness.
+    -   **Satellite Mode:** Integrated **Google Maps** toggle for
+        verifying physical landmarks and terrain.
+-   **Interactive Response:**
+    -   **Simulated Comms:** "Call User" functionality with
+        call-bridging simulation.
+    -   **Resource Dispatch:** Pin user locations to the map for ground
+        teams.
+
+### 🔒 Cybersecurity & Privacy
+
+-   **Privacy by Design:** Least-Privilege access model.
+-   **PII Redaction:** Phone numbers & home addresses are
+    **cryptographically blurred/locked** by default.
+-   **Context-Aware Access:** Data decrypts only when a **CRITICAL
+    PANIC** state is triggered.
+-   **Blind Dialing:** Operators can contact "Safe" users via a secure
+    bridge without seeing raw numbers.
 
 ------------------------------------------------------------------------
 
 ## 🏗️ Architecture
 
-The system uses a **Hybrid Realtime** approach:
+### Hybrid Realtime Design
 
-### 1. Frontend (React + Vite)
+#### Frontend (React + Vite)
 
--   Manages local state and simulation loops.
--   **Split Brain Rendering:** Displays either `CitizenLayout` or
-    `OperatorLayout` based on user role.
--   **Persistence:** Uses `localStorage` to maintain journey state.
+-   Local state + simulation loops.
+-   **Split Brain Rendering:** `CitizenLayout` vs `OperatorLayout` by
+    role.
+-   **Rich Mock Data:** Realistic persona generation (e.g., *Thandiwe
+    Nkosi*) for demos.
 
-### 2. Backend (Python FastAPI)
+#### Backend (Python FastAPI)
 
--   **Intelligence Layer:** Handles alerts, dispatch simulation, and
-    journey termination.
--   **Data Source:** Google Firestore via Firebase Admin SDK.
--   **Mock Mode:** Automatically falls back to in-memory storage if
-    Firebase keys are missing.
+-   **Intelligence Layer:** Alerts, dispatch simulation, journey
+    termination.
+-   **Persistence:** Google Firestore (Firebase Admin SDK).
+-   **Mock Mode:** In-memory storage if Firebase credentials are
+    missing.
 
 ------------------------------------------------------------------------
 
@@ -76,8 +92,7 @@ The system uses a **Hybrid Realtime** approach:
 
 -   Node.js v18+
 -   Python v3.10+
--   Google Cloud Project with **Maps JavaScript API**
--   Firebase Project with **Firestore** enabled
+-   Google Cloud Project with **Maps JavaScript API** (Billing enabled)
 
 ------------------------------------------------------------------------
 
@@ -105,7 +120,7 @@ pip install -r requirements.txt
 uvicorn main:app --reload
 ```
 
-Server runs at: `http://localhost:8000`
+Backend runs at: `http://localhost:8000`
 
 ------------------------------------------------------------------------
 
@@ -114,85 +129,60 @@ Server runs at: `http://localhost:8000`
 ``` bash
 cd frontend
 npm install
+```
+
+### Environment Configuration
+
+Create a `.env` file in `frontend/`:
+
+``` env
+VITE_GOOGLE_MAPS_API_KEY=your_actual_api_key_here
+```
+
+### Run Frontend
+
+``` bash
 npm run dev
 ```
 
-App runs at: `http://localhost:5173`
-
-### Google Maps Configuration
-
-Edit:
-
-    src/components/map/GoogleMapEngine.jsx
-
-Replace:
-
-    YOUR_GOOGLE_MAPS_API_KEY_HERE
+Frontend runs at: `http://localhost:5173`
 
 ------------------------------------------------------------------------
 
 ## 🎮 Demo Walkthrough
 
-### Split Brain Experience
+### 1. Split Brain Experience
 
-Open two browser windows:
+-   **Operator:** Desktop login, tactical dashboard view.
+-   **Citizen:** Mobile / Incognito login.
 
-**Operator (Desktop):** - Login as Ops Center - View tactical dashboard
-with live units
+### 2. Privacy Check
 
-**Citizen (Mobile / Incognito):** - Login as Citizen - Click **Start
-Journey** - User appears on Operator map (Green)
+-   Select a **Safe** unit (e.g., Unit 42).
+-   Phone number masked.
+-   Address locked.
+-   Initiate **Secure Call Bridge**.
 
-------------------------------------------------------------------------
+### 3. Panic Flow
 
-### Panic Flow
+-   Citizen taps **START JOURNEY**, then **PANIC**.
+-   Citizen UI → Red.
+-   Operator unit → Red.
+-   PII decrypts.
+-   Verify location via **Satellite Mode**.
 
--   Citizen taps **PANIC**
--   Citizen UI turns Red
--   Operator Map unit turns Red
--   Backend logs: 🚨 `DISPATCH TRIGGERED`
+### 4. False Alarm
 
-### False Alarm
-
--   Citizen taps **Cancel**
--   Status resets to Active
--   Backend logs: `FALSE ALARM`
-
-### Arrived Safely
-
--   Journey ends
--   User removed from Operator map
--   Session cleared
+-   Citizen taps **Cancel**.
+-   Status resets.
+-   Operator data re-locks.
 
 ------------------------------------------------------------------------
 
-## 📂 Project Structure
+## ⚠️ Security Notes
 
-    waypoint/
-    ├── backend/
-    │   ├── main.py
-    │   ├── services/
-    │   │   ├── firebase.py
-    │   │   └── analysis.py
-    │   └── serviceAccountKey.json
-    │
-    └── frontend/
-        ├── src/
-        │   ├── components/map/
-        │   ├── context/
-        │   ├── features/
-        │   │   ├── citizen/
-        │   │   └── operator/
-        │   └── services/
-
-------------------------------------------------------------------------
-
-## ⚠️ Deployment Notes
-
--   **Environment Variables:** Pass Firebase credentials via
-    `FIREBASE_CREDS`
--   **Google Maps:** Billing must be enabled
--   **Security:** Never commit serviceAccountKey.json
+-   API keys stored in `.env`.
+-   Frontend redaction is demo-only; backend required for production.
 
 ------------------------------------------------------------------------
 
