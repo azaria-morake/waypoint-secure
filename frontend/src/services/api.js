@@ -1,4 +1,5 @@
-const API_URL = 'http://localhost:8000/api/v1';
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+const API_URL = `${BASE_URL}/api/v1`;
 
 // --- COORDINATE MAPPER (Real World -> SVG Grid) ---
 // We define a Bounding Box around JHB/Pretoria for the demo

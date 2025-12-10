@@ -1,0 +1,21 @@
+services:
+  # 1. THE BACKEND SERVICE
+  - type: web
+    name: waypoint-backend
+    env: python
+    
+    # Tells Render to look inside the 'backend' folder
+    rootDirectory: backend
+    
+    # Command to install dependencies
+    buildCommand: pip install -r requirements.txt
+    
+    # Command to start the server (Uvicorn)
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    
+    # Environment Variables we need to set in the dashboard later
+    envVars:
+      - key: FIREBASE_CREDS
+        sync: false # 'false' means we will paste the secret value manually in the dashboard
+      - key: PYTHON_VERSION
+        value: 3.10.0
