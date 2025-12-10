@@ -5,10 +5,13 @@ import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
 const MAP_CENTER = { lat: -25.7479, lng: 28.2293 };
 
 const GoogleMapEngine = ({ journeys }) => {
-  // ⚠️ REPLACE WITH YOUR REAL API KEY FOR THE DEMO ⚠️
-  // If you don't have one, the map will show a "Development Purposes Only" watermark, 
-  // which is usually fine for local hackathon demos.
-  const API_KEY = "YOUR_GOOGLE_MAPS_API_KEY_HERE";
+  
+  const API_KEY = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+
+  if (!API_KEY) {
+    console.error("🔴 Google Maps API Key is missing! Check your .env file.");
+    return <div className="p-4 text-red-500 bg-red-100 font-mono">MISSING API KEY</div>;
+  }
 
   return (
     <div className="w-full h-full rounded-lg overflow-hidden shadow-2xl border border-slate-700 relative">
@@ -18,18 +21,16 @@ const GoogleMapEngine = ({ journeys }) => {
           defaultZoom={15}
           gestureHandling={'greedy'}
           disableDefaultUI={true}
-          mapId={"DEMO_MAP_ID"} // Optional: Required only for AdvancedMarkers
+          mapId={"DEMO_MAP_ID"}
           className="w-full h-full"
           style={{ width: '100%', height: '100%' }}
         >
-          {/* Render All Active Journeys */}
           {journeys.map((j) => (
             <Marker
               key={j.id}
-              position={{ lat: j.x, lng: j.y }} // Note: We map x->lat, y->lng in Context now
+              position={{ lat: j.x, lng: j.y }}
               title={j.name}
               icon={{
-                // Green/Blue for Safe, Red for Panic
                 path: window.google?.maps?.SymbolPath?.CIRCLE,
                 scale: 8,
                 fillColor: j.status === 'critical' ? '#EF4444' : '#3B82F6',
@@ -42,7 +43,7 @@ const GoogleMapEngine = ({ journeys }) => {
         </Map>
       </APIProvider>
 
-      {/* Tactical HUD Overlay (Keeps the "Ops" vibe) */}
+      {/* Tactical HUD Overlay */}
       <div className="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur px-4 py-2 rounded border border-slate-600 z-10">
         <div className="text-xs text-slate-400 font-mono">SATELLITE FEED</div>
         <div className="text-green-400 font-bold text-sm flex items-center gap-2">

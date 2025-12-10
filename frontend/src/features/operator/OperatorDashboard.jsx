@@ -1,10 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import SVGMapEngine from '../../components/map/SVGMapEngine';
-import { AlertCircle, User, Activity } from 'lucide-react';
+import GoogleMapEngine from '../../components/map/GoogleMapEngine'; //
+import { AlertCircle, User, Activity, Map as MapIcon, Globe } from 'lucide-react'; // Added Icons
 
 const OperatorDashboard = () => {
   const { journeys } = useAuth();
+  
+  // State to toggle between 'tactical' (SVG) and 'satellite' (Google)
+  const [viewMode, setViewMode] = useState('tactical');
 
   // Sorting: Critical incidents go to the top
   const sortedJourneys = [...journeys].sort((a, b) => 
@@ -58,16 +62,36 @@ const OperatorDashboard = () => {
 
       {/* MAIN CONTENT: The Map */}
       <section className="flex-1 bg-slate-950 p-6 relative flex flex-col">
+        
+        {/* TOP RIGHT CONTROLS */}
         <div className="absolute top-4 right-6 z-10 flex space-x-4">
-          <div className="flex items-center space-x-2 bg-slate-900/80 px-3 py-1 rounded border border-slate-700">
+          
+          {/* THE NEW TOGGLE BUTTON */}
+          <button 
+            onClick={() => setViewMode(prev => prev === 'tactical' ? 'satellite' : 'tactical')}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded shadow-lg transition-all active:scale-95 border border-blue-400"
+          >
+            {viewMode === 'tactical' ? <Globe className="w-4 h-4" /> : <MapIcon className="w-4 h-4" />}
+            <span className="text-xs font-bold font-mono">
+              {viewMode === 'tactical' ? 'SWITCH TO SATELLITE' : 'SWITCH TO TACTICAL'}
+            </span>
+          </button>
+
+          <div className="flex items-center space-x-2 bg-slate-900/80 px-3 py-1 rounded border border-slate-700 backdrop-blur">
              <Activity className="w-4 h-4 text-green-500" />
              <span className="text-xs font-mono text-slate-400">SYS: NORMAL</span>
           </div>
         </div>
         
-        <div className="flex-1">
-          <SVGMapEngine journeys={journeys} />
+        {/* MAP CONTAINER - CONDITIONAL RENDER */}
+        <div className="flex-1 relative rounded-xl overflow-hidden border border-slate-700 shadow-2xl">
+          {viewMode === 'tactical' ? (
+             <SVGMapEngine journeys={journeys} /> //
+          ) : (
+             <GoogleMapEngine journeys={journeys} /> //
+          )}
         </div>
+
       </section>
     </div>
   );

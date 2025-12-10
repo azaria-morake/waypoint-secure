@@ -7,7 +7,7 @@ const OperatorLayout = () => {
   const { logout } = useAuth();
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-200 flex flex-col overflow-hidden">
+    <div className="h-screen bg-slate-900 text-slate-200 flex flex-col overflow-hidden">
       {/* Tactical Header */}
       <header className="h-14 bg-slate-950 border-b border-slate-800 flex items-center justify-between px-6">
         <div className="flex items-center space-x-3">
